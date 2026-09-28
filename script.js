@@ -1,4 +1,4 @@
-const API_URL = "https://mental-health-score-kappa.vercel.app";
+const API_URL = "/predict";
 
 const form = document.getElementById("signal-form");
 const errorEl = document.getElementById("form-error");
