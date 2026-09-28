@@ -4,8 +4,8 @@ from fastapi import FastAPI
 from pydantic import BaseModel, Field
 from typing import Literal 
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 model = joblib.load('Mental_Health_Model.pkl')
 app = FastAPI()
@@ -17,31 +17,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Pydantic Model
 class InputData(BaseModel):
     age                     : int = Field(..., ge=10, le=100)
     gender                  : Literal['Male', 'Female']
     country                 : str
     academic_level          : Literal['Undergraduate', 'Graduate', 'High School']
-    most_used_platform      : Literal[ 'Facebook',  'LinkedIn', 'Instagram',  'Snapchat',   'Twitter',   'YouTube','TikTok',      'LINE', 'KakaoTalk', 'VKontakte',  'WhatsApp',    'WeChat']
+    most_used_platform      : Literal['Facebook', 'LinkedIn', 'Instagram', 'Snapchat', 'Twitter', 'YouTube', 'TikTok', 'LINE', 'KakaoTalk', 'VKontakte', 'WhatsApp', 'WeChat']
     purpose_of_use          : Literal['Networking', 'Education', 'Entertainment', 'News']
     avg_daily_usage_hours   : float = Field(..., ge=0, le=24)
     daily_unlocks           : int = Field(..., ge=0)
     study_hours             : float = Field(..., ge=0, le=24)
     physical_activity_hours : float = Field(..., ge=0, le=24)
     sleep_hours_per_night   : float = Field(..., ge=0, le=24)
-    stress_level            : Literal['Low', 'Medium', 'High','Very High']
+    stress_level            : Literal['Low', 'Medium', 'High', 'Very High']
 
 class PredictionResponse(BaseModel):
     predicted_mental_health_score: float
-
-@app.get("/")
-async def serve_frontend():
-    return FileResponse("index.html")
-
-@app.get('/api')
-def greet():
-    return {"Hello!": "Welcome to the Mental Health Prediction API."}
 
 top_countries = ['Other','India','USA','Canada','Australia','UK','Germany','Mexico','Turkey','France']
 
@@ -63,9 +54,12 @@ def predict(data: InputData):
         'Stress_Level': data.stress_level,
         'Grouped_country': country_group
     }])
-
     prediction = model.predict(input_row)[0]
-    return PredictionResponse(predicted_mental_health_score=round(float(prediction),2))
+    return PredictionResponse(predicted_mental_health_score=round(float(prediction), 2))
 
-# Static files (CSS, JS) serve karne ke liye
-app.mount("/", StaticFiles(directory=".", html=True), name="static")
+@app.get("/")
+async def read_index():
+    return FileResponse('index.html')
+
+# CSS aur JS serve karne ke liye
+app.mount("/static", StaticFiles(directory="."), name="static")
