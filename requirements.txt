@@ -1,5 +1,5 @@
 fastapi
-univorn
+unicorn
 pydantic
 joblib
 pandas
