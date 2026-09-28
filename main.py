@@ -4,7 +4,8 @@ from fastapi import FastAPI
 from pydantic import BaseModel, Field
 from typing import Literal 
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 model = joblib.load('Mental_Health_Model.pkl')
 app = FastAPI()
@@ -31,24 +32,21 @@ class InputData(BaseModel):
     sleep_hours_per_night   : float = Field(..., ge=0, le=24)
     stress_level            : Literal['Low', 'Medium', 'High','Very High']
 
-# Describe what we send back (Response Body)
 class PredictionResponse(BaseModel):
     predicted_mental_health_score: float
 
-    
+@app.get("/")
+async def serve_frontend():
+    return FileResponse("index.html")
 
-
-
-@app.get('/')
+@app.get('/api')
 def greet():
     return {"Hello!": "Welcome to the Mental Health Prediction API."}
 
-
 top_countries = ['Other','India','USA','Canada','Australia','UK','Germany','Mexico','Turkey','France']
 
-@app.post('/predict',response_model = PredictionResponse)
+@app.post('/predict', response_model=PredictionResponse)
 def predict(data: InputData):
-
     country_group = data.country if data.country in top_countries else 'Other'
     input_row = pd.DataFrame([{
         'Age': data.age,
@@ -64,8 +62,10 @@ def predict(data: InputData):
         'Sleep_Hours_Per_Night': data.sleep_hours_per_night,
         'Stress_Level': data.stress_level,
         'Grouped_country': country_group
-
     }])
 
     prediction = model.predict(input_row)[0]
     return PredictionResponse(predicted_mental_health_score=round(float(prediction),2))
+
+# Static files (CSS, JS) serve karne ke liye
+app.mount("/", StaticFiles(directory=".", html=True), name="static")
